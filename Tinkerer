@@ -1,0 +1,192 @@
+statNames = {Wound = false, Muddle = false, Immobilize = false, Invisible = false, Disarm = false, Strengthen = false, Stun = false, Poison = false, Regenerate = false}
+
+health = {
+   value = 10,
+   max = 10
+}
+
+statsObj = "6c1b20"
+
+function onLoad(save_state)
+   if save_state ~= "" and self.getDescription() ~= "" then
+      saved_data = JSON.decode(save_state)
+      if saved_data.statNames then statNames = saved_data.statNames end
+      if saved_data.health then
+         health = saved_data.health
+         Wait.condition(setHealth, checkLoaded)
+      end
+   else
+      Wait.condition(function() setTyp({"normal"}) end, checkLoaded)
+   end
+   Wait.condition(checkStats, checkLoaded)
+   createBtns()
+end
+
+function checkLoaded()
+   if not self.loading_custom and not self.spawning then
+      return true
+   end
+   return false
+end
+
+function checkStats()
+   for i, j in pairs(statNames) do
+      if j == true then
+         self.UI.setAttribute(i, "active", true)
+      end
+   end
+   Wait.frames(function() self.UI.setAttribute("statePanel", "width", 300 + (getStatsCount() - 1) * 350) end, 1)
+   local num = self.getName():match("%d+")
+   if num ~= nil then
+      -- Wait.frames(function() self.UI.setAttribute("number", "image", num) end, 1)
+      self.UI.setAttribute("number", "image", num)
+   end
+end
+
+function onSave()
+   local save_state = JSON.encode({health = health, statNames = statNames})
+   -- local save_state = ""
+   self.script_state = save_state
+end
+
+function createBtns()
+   local buttonParameter = {click_function = "add", function_owner = self, position = { - 0.2, 0.2, - 0.5}, label = "+", width = 250, height = 250, font_size = 300, color = {0, 0, 0, 0}, font_color = {0, 0, 0, 100}}
+   self.createButton(buttonParameter)
+   buttonParameter.position = {0.2, 0.2, - 0.5}
+   buttonParameter.click_function = "sub"
+   buttonParameter.label = "-"
+   self.createButton(buttonParameter)
+end
+
+function add(obj, color, alt_click) onClick(color, -1, "add") end
+function sub(obj, color, alt_click) onClick(color, -1, "sub") end
+function onClick(player, value, id)
+   if id == "editButton" then
+      if self.UI.getAttribute("editPanel", "active") == "False" or self.UI.getAttribute("editPanel", "active") == nil then
+         self.UI.setAttribute("editPanel", "active", true)
+      else
+         self.UI.setAttribute("editPanel", "active", false)
+      end
+   elseif statNames[id] ~= nil then
+      self.UI.setAttribute(id, "active", false)
+      self.UI.setAttribute("statePanel", "width", 260 + (getStatsCount() - 1) * 280)
+      statNames[id] = false
+   elseif id == "normal" or id == "elite" then
+      setTyp({id})
+   elseif id == "addNumber" or id == "subNumber" then
+      local temp = -1
+      if id == "addNumber" then temp = 1 end
+      local number = tonumber(self.UI.getAttribute("number", "image")) + temp
+      if number > 10 then number = 10 end
+      if number < 1 then number = 1 end
+      self.UI.setAttribute("number", "image", number)
+   else
+      local oldHP = health.value
+      local tabInfo = getNotebookTabs()
+      local tab = ""
+      if id == "add" then health.value = health.value + 1
+      elseif id == "sub" then health.value = health.value - 1
+      elseif id == "addMax" then health.value = health.value + 1
+         health.max = health.max + 1
+      elseif id == "subMax" then health.value = health.value - 1
+         health.max = health.max - 1
+      end
+      if health.value > health.max then health.value = health.max end
+      if health.value < 0 then health.value = 0 end
+
+      for _, t in pairs(tabInfo) do
+         if t.title == "Options" then tab = t.body end
+      end
+      if tab ~= "" then
+         local settings = tab:match("broadcast hp changes:(%a+)")
+         --all/chars/monster/none
+         if settings == "all" or settings == "chars" then
+            local color = "Green"
+            if player ~= nil and player ~= -1 and player.color == nil and Player[player] then
+               color = player
+            end
+            if id == "add" then
+               if oldHP == health.value then
+                  broadcastToAll(self.getName() .. " is already at max HP.", color)
+               else
+                  broadcastToAll(self.getName() .. " gained 1 HP. From " .. oldHP .. "HP to " .. health.value .. "HP.", color)
+               end
+            elseif id == "sub" then
+               if oldHP == health.value then
+                  broadcastToAll(self.getName() .. " is already at 0 HP.", color)
+               else
+                  broadcastToAll(self.getName() .. " lost 1 HP. From " .. oldHP .. "HP to " .. health.value .. "HP.", color)
+               end
+            end
+         end
+      end
+      getObjectFromGUID("75ab50").call("changeHP", {self.getName(), health.value})
+      setHealth()
+   end
+   self.UI.setAttribute("editButton", "textColor", "#000000")
+end
+
+function onCollisionEnter(a)
+   if a.collision_object.getQuantity() ~= -1 then return end
+ local newState = a.collision_object.getName()
+  if statNames[newState] ~= nil then
+      statNames[newState] = true
+      a.collision_object.destruct()
+      self.UI.setAttribute(newState, "active", true)
+      Wait.frames(function() self.UI.setAttribute("statePanel", "width", 260 + (getStatsCount() - 1) * 265) end, 1)
+   end
+end
+
+function getStatsCount()
+   local count = 0
+   for i, j in pairs(statNames) do
+      if self.UI.getAttribute(i, "active") == "True" then
+         count = count + 1
+      end
+   end
+   return count
+end
+
+function setHealth()
+   self.UI.setAttribute("progressBar", "percentage", health.value / health.max * 100)
+   self.UI.setAttribute("editButton", "text", health.value .. "/" .. health.max)
+   self.setDescription(health.value .. "/" .. health.max)
+   self.UI.setAttribute("editButton", "textColor", "#000000")
+   self.UI.setAttribute("panel", "position", "0 0 -" .. self.getBounds().size.y / self.getScale().y * 110 + Global.getTable("envelopes")[self.getName()].HPBarOffset)
+end
+
+function setTyp(typ)
+   if typ[1] == "normal" then
+      self.setColorTint({1, 1, 1})
+   else
+      self.setColorTint({1, 1, 0})
+   end
+   local partySheet = nil
+   for _, obj in pairs(getAllObjects()) do
+      if obj.getDescription() == "Party Sheet" then
+         partySheet = obj
+      end
+   end
+   if partySheet ~= nil then
+      local level = tonumber(partySheet.UI.getAttribute("scenarioLevel", "text"))
+      -- getObjectFromGUID(statsObj).getTable("stats")[getNameWoNumber()][level+1][typ[1]]
+      local table = getObjectFromGUID(statsObj).getTable("stats")[getNameWoNumber()][level + 1]
+      if table.normal ~= nil then
+         health.max = table[typ[1]].health
+      else
+         return
+      end
+      health.value = health.max
+      setHealth()
+   end
+end
+
+function getNameWoNumber()
+   local name = self.getName()
+   local num = name:match("%d+")
+   if num ~= nil then
+      return name:sub(1, name:find(num) - 2)
+   else
+      return name
+   end
+end
