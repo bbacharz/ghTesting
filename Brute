@@ -5,7 +5,7 @@ health = {
    max = 10
 }
 
-statsObj = "6c1b20"
+statsObj = "3ed4b0"
 
 function onLoad(save_state)
    if save_state ~= "" and self.getDescription() ~= "" then

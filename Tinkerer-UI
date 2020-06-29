@@ -1,0 +1,33 @@
+<Defaults>
+  <Button onClick="onClick" fontSize="80" fontStyle="Bold" textColor="#FFFFFF" color="#00000000"/>
+  <Text fontSize="80" fontStyle="Bold" color="#FFFFFF"/>
+</Defaults>
+
+<Panel id="panel" position="0 0 -220" rotation="270 0 0" scale="0.2 0.2">
+  <ProgressBar id="progressBar" height="100" width="600" showPercentageText="false" color="#FFFFFFE0" percentage="100" fillImageColor="#C5B68C"></ProgressBar>
+  <Button id="editButton" height="100" width="600" text="10/10"></Button>
+  <Panel id="editPanel" height="100" width="600" offsetXY="0 200" active="False">
+    <VerticalLayout>
+      <HorizontalLayout spacing="73"  minheight="100">
+        <Button id="subMax" text="◄"></Button>
+        <Text>Max</Text>
+        <Button id="addMax" text="►"></Button>
+      </HorizontalLayout>
+    </VerticalLayout>
+  </Panel>
+  <Panel id="statePanel" height="260" width="-5" offsetXY="0 210">
+    <VerticalLayout>
+      <HorizontalLayout spacing="5">
+        <Button id="Disarm" active="false"><Image image="Disarm" preserveAspect="true"></Image></Button>
+        <Button id="Immobilize" active="false"><Image image="Immobilize" preserveAspect="true"></Image></Button>
+        <Button id="Invisible" active="false"><Image image="Invisible" preserveAspect="true"></Image></Button>
+        <Button id="Muddle" active="false"><Image image="Muddle" preserveAspect="true"></Image></Button>
+        <Button id="Poison" active="false"><Image image="Poison" preserveAspect="true"></Image></Button>
+        <Button id="Strengthen" active="false"><Image image="Strengthen" preserveAspect="true"></Image></Button>
+        <Button id="Stun" active="false"><Image image="Stun" preserveAspect="true"></Image></Button>
+        <Button id="Wound" active="false"><Image image="Wound" preserveAspect="true"></Image></Button>
+        <Button id="Regenerate" active="false"><Image image="Regenerate" preserveAspect="true"></Image></Button>
+      </HorizontalLayout>
+    </VerticalLayout>
+  </Panel>
+</Panel>
